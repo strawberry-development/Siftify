@@ -1,6 +1,6 @@
 <?php
 
-namespace SiftifyVendor\Siftify;
+namespace strawberryDevelopment\Siftify;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -8,10 +8,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use SiftifyVendor\Siftify\Contracts\Filterable;
-use SiftifyVendor\Siftify\Support\FilterHandler;
-use SiftifyVendor\Siftify\Support\PaginationHandler;
-use SiftifyVendor\Siftify\Support\ResponseFormatter;
+use strawberryDevelopment\Siftify\Contracts\Filterable;
+use strawberryDevelopment\Siftify\Support\FilterHandler;
+use strawberryDevelopment\Siftify\Support\PaginationHandler;
+use strawberryDevelopment\Siftify\Support\ResponseFormatter;
 use Throwable;
 
 class Siftify implements Filterable

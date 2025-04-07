@@ -1,11 +1,11 @@
 <?php
 
-namespace SiftifyVendor\Siftify\Support;
+namespace strawberryDevelopment\Siftify\Support;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Config;
-use SiftifyVendor\Siftify\Contracts\Filterable;
-use SiftifyVendor\Siftify\Siftify;
+use strawberryDevelopment\Siftify\Contracts\Filterable;
+use strawberryDevelopment\Siftify\Siftify;
 use Throwable;
 
 class PaginationHandler

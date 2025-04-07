@@ -1,5 +1,5 @@
 {
-    "name": "strawberry-development/siftify",
+    "name": "strawberryDevelopment/siftify",
     "description": "Laravel package for managing HTTP request filtering.",
     "type": "library",
     "license": "AGPL-3.0-or-later",
@@ -18,18 +18,18 @@
     },
     "autoload": {
         "psr-4": {
-            "strawberry-development\\Siftify\\": "src/"
+            "strawberryDevelopment\\Siftify\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "strawberry-development\\Siftify\\Tests\\": "tests/"
+            "strawberryDevelopment\\Siftify\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "strawberry-development\\Siftify\\SiftifyServiceProvider"
+                "strawberryDevelopment\\Siftify\\SiftifyServiceProvider"
             ]
         }
     },

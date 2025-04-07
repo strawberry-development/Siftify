@@ -1,10 +1,10 @@
 <?php
 
-namespace SiftifyVendor\Siftify\Support;
+namespace strawberryDevelopment\Siftify\Support;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Config;
-use SiftifyVendor\Siftify\Siftify;
+use strawberryDevelopment\Siftify\Siftify;
 
 class ResponseFormatter
 {

@@ -1,12 +1,12 @@
 <?php
 
-namespace SiftifyVendor\Siftify\Support;
+namespace strawberryDevelopment\Siftify\Support;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
-use SiftifyVendor\Siftify\Exceptions\InvalidFilterException;
-use SiftifyVendor\Siftify\Siftify;
+use strawberryDevelopment\Siftify\Exceptions\InvalidFilterException;
+use strawberryDevelopment\Siftify\Siftify;
 use Throwable;
 
 class FilterHandler
