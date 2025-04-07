@@ -83,7 +83,7 @@ GET /api/users?posts*title=Laravel&profile*country=US
 
 ## Quick start
 
-For more detailed documentation, examples, and advanced usage, please visit [✨Quick start✨]().
+For more detailed documentation, examples, and advanced usage, please visit ✨[Quick start](quickStart.md)✨.
 
 ## Configuration Options
 
