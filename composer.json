@@ -2,7 +2,7 @@
     "name": "siftifyvendor/siftify",
     "description": "Laravel package for managing HTTP request filtering. ",
     "type": "library",
-    "license": "GNU",
+    "license": "AGPL-3.0-or-later",
     "authors": [
         {
             "name": "Strawberry"
