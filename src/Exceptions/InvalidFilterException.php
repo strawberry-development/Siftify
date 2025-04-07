@@ -1,6 +1,6 @@
 <?php
 
-namespace strawberryDevelopment\Siftify\Exceptions;
+namespace strawberrydev\Siftify\Exceptions;
 
 use Exception;
 use Illuminate\Support\Facades\Config;

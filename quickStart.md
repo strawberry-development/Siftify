@@ -32,7 +32,7 @@ namespace App\Http\Controllers\API;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use strawberryDevelopment\Siftify\Siftify;
+use strawberrydev\Siftify\Siftify;
 
 class UserController extends Controller
 {

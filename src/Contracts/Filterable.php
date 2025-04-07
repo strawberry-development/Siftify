@@ -1,6 +1,6 @@
 <?php
 
-namespace strawberryDevelopment\Siftify\Contracts;
+namespace strawberrydev\Siftify\Contracts;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

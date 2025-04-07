@@ -1,6 +1,6 @@
 <?php
 
-namespace strawberryDevelopment\Siftify;
+namespace strawberrydev\Siftify;
 
 use Illuminate\Support\ServiceProvider;
 
