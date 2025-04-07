@@ -148,7 +148,3 @@ If you need only the count of matching records:
 ```
 GET /api/users?meta_count_only=1
 ```
-
-## 10. Advanced Usage
-
-For more advanced usage, please refer to the full documentation.
