@@ -10,7 +10,7 @@ Siftify is a Laravel package which was made for a school project. It provides a 
 You can install the package via composer:
 
 ```bash
-composer require vendor/siftify
+composer require strawberry-development/siftify
 ```
 
 ## Publish Configuration
