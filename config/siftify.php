@@ -68,7 +68,8 @@ return [
         'meta_ignore',
         'meta_count_only',
         'only_meta',
-        // TODO
+        'abstract_search',
+        // not fully functionnal
         'group_by',
     ],
 ];

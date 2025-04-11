@@ -47,7 +47,15 @@ class Siftify implements Filterable
     public function __construct(Request $request)
     {
         $this->request = $request;
+
+        // Get default standard parameters from config
         $this->standardParameters = Config::get('siftify.standard_parameters', []);
+
+        // Ensure abstract_search is included in standard parameters
+        if (!in_array('abstract_search', $this->standardParameters)) {
+            $this->standardParameters[] = 'abstract_search';
+        }
+
         $this->startTime = microtime(true);
         $this->payloadSize = $this->calculateRequestPayloadSize();
 
@@ -440,6 +448,22 @@ class Siftify implements Filterable
             'request_path' => $this->request->path(),
             'request_method' => $this->request->method(),
         ]);
+    }
+
+    /**
+     * Apply abstract search across all allowed filters
+     *
+     * @param string $searchTerm The search term to apply
+     * @return $this
+     */
+    public function withAbstractSearch(string $searchTerm): self
+    {
+        try {
+            $this->request->merge(['abstract_search' => $searchTerm]);
+        } catch (Throwable $e) {
+            $this->handleException("Error setting abstract search", $e);
+        }
+        return $this;
     }
 
     // Getters for internal properties (used by handlers)
