@@ -12,18 +12,9 @@
         "php": "^8.0",
         "laravel/framework": "^9.0|^10.0|^11.0"
     },
-    "require-dev": {
-        "phpunit/phpunit": "^9.0",
-        "orchestra/testbench": "^7.0|^8.0"
-    },
     "autoload": {
         "psr-4": {
             "strawberrydev\\Siftify\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "strawberrydev\\Siftify\\Tests\\": "tests/"
         }
     },
     "extra": {

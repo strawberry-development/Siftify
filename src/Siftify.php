@@ -10,8 +10,12 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use strawberrydev\Siftify\Contracts\Filterable;
 use strawberrydev\Siftify\Support\FilterHandler;
+use strawberrydev\Siftify\Support\GroupByHandler;
 use strawberrydev\Siftify\Support\PaginationHandler;
+use strawberrydev\Siftify\Support\ParameterParser;
+use strawberrydev\Siftify\Support\RelationshipHandler;
 use strawberrydev\Siftify\Support\ResponseFormatter;
+use strawberrydev\Siftify\Support\WhereConditionHandler;
 use Throwable;
 
 class Siftify implements Filterable
@@ -40,13 +44,20 @@ class Siftify implements Filterable
     protected array $errors = [];
     protected array $response;
 
+    // Support handlers
     protected FilterHandler $filterHandler;
     protected PaginationHandler $paginationHandler;
     protected ResponseFormatter $responseFormatter;
+    protected RelationshipHandler $relationshipHandler;
+    protected WhereConditionHandler $whereConditionHandler;
+    protected GroupByHandler $groupByHandler;
+    protected ParameterParser $parameterParser;
 
     public function __construct(Request $request)
     {
         $this->request = $request;
+        $this->startTime = microtime(true);
+        $this->payloadSize = $this->calculateRequestPayloadSize();
 
         // Get default standard parameters from config
         $this->standardParameters = Config::get('siftify.standard_parameters', []);
@@ -56,60 +67,25 @@ class Siftify implements Filterable
             $this->standardParameters[] = 'abstract_search';
         }
 
-        $this->startTime = microtime(true);
-        $this->payloadSize = $this->calculateRequestPayloadSize();
+        // Initialize handlers
+        $this->initializeHandlers();
 
         // Process standard parameters
-        $this->processStandardParameters();
+        $this->parameterParser->processStandardParameters();
+    }
 
-        // Initialize handlers
+    /**
+     * Initialize all handlers
+     */
+    protected function initializeHandlers(): void
+    {
         $this->filterHandler = new FilterHandler($this);
         $this->paginationHandler = new PaginationHandler($this);
         $this->responseFormatter = new ResponseFormatter($this);
-    }
-
-    /**
-     * Process standard parameters from the request
-     */
-    protected function processStandardParameters(): void
-    {
-        try {
-            // Process 'only' parameter - specify which fields to include in the response
-            if ($this->request->has('only')) {
-                $this->onlyFields = $this->parseCommaSeparatedParameter('only');
-            }
-
-            // Process 'meta_ignore' parameter - specify which meta fields to exclude
-            if ($this->request->has('meta_ignore')) {
-                $this->metaIgnored = $this->parseCommaSeparatedParameter('meta_ignore');
-            }
-
-            // Process 'meta_count_only' parameter - return only count meta data
-            if ($this->request->has('meta_count_only')) {
-                $this->metaCountOnly = true;
-            }
-
-            // Process 'only_meta' parameter - return only meta information
-            if ($this->request->has('only_meta')) {
-                $this->onlyMeta = true;
-            }
-
-            // Process 'group_by' parameter - group results by specified fields
-            if ($this->request->has('group_by')) {
-                $this->groupByFields = $this->parseCommaSeparatedParameter('group_by');
-            }
-        } catch (Throwable $e) {
-            $this->handleException("Error processing standard parameters", $e);
-        }
-    }
-
-    /**
-     * Helper to parse comma-separated parameter values
-     */
-    protected function parseCommaSeparatedParameter(string $param): array
-    {
-        $value = $this->request->input($param, '');
-        return array_filter(explode(',', $value));
+        $this->relationshipHandler = new RelationshipHandler($this);
+        $this->whereConditionHandler = new WhereConditionHandler($this);
+        $this->groupByHandler = new GroupByHandler($this);
+        $this->parameterParser = new ParameterParser($this);
     }
 
     public function filterOnModel(Model $model): self
@@ -166,19 +142,19 @@ class Siftify implements Filterable
     public function apply(): Builder
     {
         try {
-            $this->loadRelationships();
-            $this->applyWhereConditions();
+            $this->relationshipHandler->loadRelationships();
+            $this->whereConditionHandler->applyWhereConditions();
             $this->filterHandler->applyFilters();
             $this->filterHandler->applySorting();
 
             // Apply group by if specified
             if (!empty($this->groupByFields)) {
-                $this->applyGroupBy();
+                $this->groupByHandler->applyGroupBy();
             }
 
             // Apply field selection based on 'only' parameter
             if (!empty($this->onlyFields)) {
-                $this->applySelectOnly();
+                $this->relationshipHandler->applySelectOnly();
             }
 
             // Calculate total count before pagination is applied
@@ -193,118 +169,6 @@ class Siftify implements Filterable
         return $this->query;
     }
 
-    /**
-     * Apply GROUP BY clause to the query
-     */
-    protected function applyGroupBy(): void
-    {
-        try {
-            foreach ($this->groupByFields as $field) {
-                // Check if it's a relationship field
-                if (str_contains($field, '.') || str_contains($field, '*')) {
-                    // For relationship fields, we need special handling
-                    [$relation, $column] = $this->parseRelationshipKey($field);
-
-                    // Join the related table to perform the group by
-                    $model = $this->model;
-                    $relationInstance = $model->$relation();
-                    $relatedTable = $relationInstance->getRelated()->getTable();
-                    $parentTable = $model->getTable();
-
-                    // The specific join logic depends on the relationship type
-                    // This is a simplified example for BelongsTo relations
-                    $foreignKey = $relationInstance->getForeignKeyName();
-                    $ownerKey = $relationInstance->getOwnerKeyName();
-
-                    $this->query->join(
-                        $relatedTable,
-                        $parentTable . '.' . $foreignKey,
-                        '=',
-                        $relatedTable . '.' . $ownerKey
-                    );
-
-                    $this->query->groupBy($relatedTable . '.' . $column);
-                } else {
-                    // Simple group by for direct model fields
-                    $this->query->groupBy($field);
-                }
-            }
-        } catch (Throwable $e) {
-            $this->handleException("Error applying group by", $e);
-        }
-    }
-
-    /**
-     * Apply SELECT clause to the query based on 'only' fields
-     */
-    protected function applySelectOnly(): void
-    {
-        try {
-            // Handle direct model fields
-            $tableFields = array_filter($this->onlyFields, function($field) {
-                return !str_contains($field, '.') && !str_contains($field, '*');
-            });
-
-            if (!empty($tableFields)) {
-                // Ensure primary key is always included
-                $primaryKey = $this->model->getKeyName();
-                if (!in_array($primaryKey, $tableFields)) {
-                    $tableFields[] = $primaryKey;
-                }
-
-                // Apply direct field selection
-                $this->query->select($tableFields);
-            }
-
-            // Relationship fields are handled via the relationship loading
-        } catch (Throwable $e) {
-            $this->handleException("Error applying select only", $e);
-        }
-    }
-
-    protected function applyWhereConditions(): void
-    {
-        foreach ($this->whereConditions as $condition) {
-            if (!isset($condition['column'])) {
-                continue;
-            }
-
-            $column = $condition['column'];
-            $operator = $condition['operator'] ?? '=';
-            $value = $condition['value'] ?? null;
-
-            // Handle relationship filters (contains . or *)
-            if (str_contains($column, '.') || str_contains($column, '*')) {
-                $this->applyRelationshipWhereCondition($column, $operator, $value);
-            } else {
-                // Direct model filter
-                $this->query->where($column, $operator, $value);
-            }
-        }
-    }
-
-    protected function applyRelationshipWhereCondition(string $key, string $operator, $value): void
-    {
-        [$relation, $column] = $this->parseRelationshipKey($key);
-
-        $this->query->whereHas($relation, function ($query) use ($column, $operator, $value) {
-            $query->where($column, $operator, $value);
-        });
-    }
-
-    protected function parseRelationshipKey(string $key): array
-    {
-        if (str_contains($key, '*')) {
-            return explode('*', $key, 2);
-        }
-
-        $parts = explode('.', $key);
-        $column = array_pop($parts);
-        $relation = implode('.', $parts);
-
-        return [$relation, $column];
-    }
-
     public function paginate(?int $perPage = null): Filterable
     {
         return $this->paginationHandler->paginate($perPage);
@@ -313,29 +177,7 @@ class Siftify implements Filterable
     public function withWhereConditions(...$conditions): self
     {
         try {
-            foreach ($conditions as $condition) {
-                if (!is_array($condition)) {
-                    continue;
-                }
-
-                $count = count($condition);
-
-                if ($count === 2) {
-                    // Format: ['column', value] - use = as default operator
-                    $this->whereConditions[] = [
-                        'column' => $condition[0],
-                        'operator' => '=',
-                        'value' => $condition[1]
-                    ];
-                } elseif ($count === 3) {
-                    // Format: ['column', 'operator', value]
-                    $this->whereConditions[] = [
-                        'column' => $condition[0],
-                        'operator' => $condition[1],
-                        'value' => $condition[2]
-                    ];
-                }
-            }
+            $this->whereConditions = $this->whereConditionHandler->parseWhereConditions($conditions);
         } catch (Throwable $e) {
             $this->handleException("Error setting where conditions", $e);
         }
@@ -374,46 +216,6 @@ class Siftify implements Filterable
         return response()->json($this->response);
     }
 
-    protected function loadRelationships(): void
-    {
-        if (!empty($this->relationships)) {
-            // If we have 'only' fields with relationships, we need to restrict loaded attributes
-            if (!empty($this->onlyFields)) {
-                $relationFields = [];
-                foreach ($this->onlyFields as $field) {
-                    if (str_contains($field, '.') || str_contains($field, '*')) {
-                        [$relation, $column] = $this->parseRelationshipKey($field);
-                        if (!isset($relationFields[$relation])) {
-                            $relationFields[$relation] = [];
-                        }
-                        $relationFields[$relation][] = $column;
-                    }
-                }
-
-                // Load relationships with selected fields
-                foreach ($this->relationships as $relationship) {
-                    if (isset($relationFields[$relationship])) {
-                        $this->query->with([$relationship => function ($query) use ($relationship, $relationFields) {
-                            $query->select($relationFields[$relationship]);
-
-                            // Make sure to include the primary key and any necessary foreign keys
-                            $relatedModel = $query->getModel();
-                            $primaryKey = $relatedModel->getKeyName();
-                            if (!in_array($primaryKey, $relationFields[$relationship])) {
-                                $query->addSelect($primaryKey);
-                            }
-                        }]);
-                    } else {
-                        $this->query->with($relationship);
-                    }
-                }
-            } else {
-                // Load all relationships normally
-                $this->query->with($this->relationships);
-            }
-        }
-    }
-
     protected function calculateRequestPayloadSize(): int
     {
         try {
@@ -439,7 +241,7 @@ class Siftify implements Filterable
         $this->errors[] = $errorMessage;
 
         // Log the error with full details for debugging
-        \Illuminate\Support\Facades\Log::error($errorMessage, [
+        Log::error($errorMessage, [
             'exception' => get_class($e),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
@@ -466,7 +268,6 @@ class Siftify implements Filterable
         return $this;
     }
 
-    // Getters for internal properties (used by handlers)
     public function getRequest(): Request
     {
         return $this->request;
@@ -567,7 +368,6 @@ class Siftify implements Filterable
         return $this->groupByFields;
     }
 
-    // Setters for properties that need to be modified by handlers
     public function setQuery(Builder $query): void
     {
         $this->query = $query;
@@ -587,6 +387,36 @@ class Siftify implements Filterable
     {
         $this->totalCount = $count;
         $this->countExecuted = true;
+    }
+
+    public function setWhereConditions(array $conditions): void
+    {
+        $this->whereConditions = $conditions;
+    }
+
+    public function setOnlyFields(array $fields): void
+    {
+        $this->onlyFields = $fields;
+    }
+
+    public function setMetaIgnored(array $ignored): void
+    {
+        $this->metaIgnored = $ignored;
+    }
+
+    public function setMetaCountOnly(bool $value): void
+    {
+        $this->metaCountOnly = $value;
+    }
+
+    public function setOnlyMeta(bool $value): void
+    {
+        $this->onlyMeta = $value;
+    }
+
+    public function setGroupByFields(array $fields): void
+    {
+        $this->groupByFields = $fields;
     }
 
     public static function for(Request $request): self

@@ -1,13 +1,13 @@
 # Siftify
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/strawberrydev/siftify.svg?style=flat-square)](https://packagist.org/packages/strawberrydev/siftify)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/strawberrydev/siftify.svg?style=flat-square)](https://packagist.org/packages/strawberrydev/siftify)  
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
 
-Siftify is a Laravel package which was made for a school project. It provides a flexible and intuitive API for filtering, sorting, and paginating Eloquent models. It allows you to build robust and feature-rich APIs with minimal effort.
+Siftify is a Laravel package designed for building robust APIs with ease. It provides a flexible and intuitive API for filtering, sorting, and paginating Eloquent models—ideal for developers who want powerful query capabilities with minimal effort.
 
 ## Installation
 
-You can install the package via composer:
+To install Siftify, run the following composer command:
 
 ```bash
 composer require strawberrydev/siftify
@@ -15,13 +15,17 @@ composer require strawberrydev/siftify
 
 ## Publish Configuration
 
+Publish the package's configuration file by running:
+
 ```bash
 php artisan vendor:publish --tag="siftify-config"
 ```
 
-This will publish the configuration file to `config/siftify.php`.
+This will generate the configuration file in `config/siftify.php`.
 
 ## Basic Usage
+
+Here's an example of how to use Siftify in your controller:
 
 ```php
 use strawberrydev\Siftify\Siftify;
@@ -46,71 +50,48 @@ class UserController extends Controller
 
 ## Making Requests
 
-With Siftify in place, you can make API requests like:
+You can now make API requests like:
 
 ```
 GET /api/users?name=John&role=admin&sort=created_at&order=desc&page=2&per_page=15
 ```
 
-## Filtering with Operators
-
-Siftify supports various operators for filtering:
-
-```
-GET /api/users?email[operator]=like&email[value]=example.com
-```
-
-Available operators:
-- `=`, `!=` (Equals, Not Equals)
-- `>`, `<`, `>=`, `<=` (Comparison)
-- `like`, `not like` (Pattern matching)
-- `in`, `not in` (Multiple values)
-- `between`, `not between` (Range values)
-
 ## Filtering Relations
 
-You can filter records based on related models:
+You can also filter based on related models. For example:
 
 ```
 GET /api/users?posts.title=Laravel&profile.country=US
 ```
 
-or using alternate syntax:
+Or use alternate syntax:
 
 ```
 GET /api/users?posts*title=Laravel&profile*country=US
 ```
 
-## Quick start
+## Quick Start
 
-For more detailed documentation, examples, and advanced usage, please visit ✨[Quick start](quickStart.md)✨.
+For more detailed documentation, examples, and advanced usage, check out the [Quick Start Guide](quickStart.md).
 
 ## Configuration Options
 
-The published configuration file (`config/siftify.php`) includes options for:
+The configuration file `config/siftify.php` provides options to customize:
 
 - Pagination settings
-- Response format customization
-- Meta information configuration
+- Response format
+- Meta information
 - Security settings
 - Standard parameters
 
-## Testing
-
-**Warning** : test are not done yet.
-
-```bash
-composer test
-```
-
 ## Contributing
 
-Feel free to contribute to this project; you can also suggest improvements.
+We welcome contributions! Feel free to suggest improvements or submit PRs.
 
 ## Security
 
-If you discover any security related issues, please contact me.
+If you find any security-related issues, please get in touch directly.
 
 ## License
 
-The GNU License (GNU). Please see [License File](LICENSE.md) for more information.
+This project is licensed under the [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0).
