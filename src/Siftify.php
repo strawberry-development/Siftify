@@ -37,6 +37,8 @@ class Siftify implements Filterable
     protected bool $metaCountOnly = false;
     protected bool $onlyMeta = false;
     protected array $groupByFields = [];
+    protected ?int $resultLimit = null;
+    protected array $orderByFields = [];
 
     protected array $standardParameters;
     protected float $startTime;
@@ -139,6 +141,80 @@ class Siftify implements Filterable
         return $this;
     }
 
+    /**
+     * Limit the number of results returned
+     *
+     * @param int $limit Maximum number of records to return
+     * @return $this
+     */
+    public function limit(int $limit): self
+    {
+        try {
+            if ($limit <= 0) {
+                throw new \InvalidArgumentException("Limit must be a positive integer");
+            }
+            $this->resultLimit = $limit;
+        } catch (Throwable $e) {
+            $this->handleException("Error setting result limit", $e);
+        }
+        return $this;
+    }
+
+    /**
+     * Add an ORDER BY clause to the query
+     *
+     * @param string $column The column to sort by
+     * @param string $direction The direction to sort (asc or desc)
+     * @return $this
+     */
+    public function orderBy(string $column, string $direction = 'asc'): self
+    {
+        try {
+            // Normalize direction
+            $direction = strtolower($direction);
+
+            // Validate direction
+            if (!in_array($direction, ['asc', 'desc'])) {
+                throw new \InvalidArgumentException("Direction must be 'asc' or 'desc'");
+            }
+
+            $this->orderByFields[] = [
+                'column' => $column,
+                'direction' => $direction
+            ];
+        } catch (Throwable $e) {
+            $this->handleException("Error setting order by", $e);
+        }
+        return $this;
+    }
+
+    /**
+     * Add a descending ORDER BY clause to the query
+     *
+     * @param string $column The column to sort by
+     * @return $this
+     */
+    public function orderByDesc(string $column): self
+    {
+        return $this->orderBy($column, 'desc');
+    }
+
+    /**
+     * Apply sorts to the query
+     *
+     * @return void
+     */
+    protected function applyOrderBy(): void
+    {
+        try {
+            foreach ($this->orderByFields as $orderBy) {
+                $this->query->orderBy($orderBy['column'], $orderBy['direction']);
+            }
+        } catch (Throwable $e) {
+            $this->handleException("Error applying order by", $e);
+        }
+    }
+
     public function apply(): Builder
     {
         try {
@@ -146,6 +222,11 @@ class Siftify implements Filterable
             $this->whereConditionHandler->applyWhereConditions();
             $this->filterHandler->applyFilters();
             $this->filterHandler->applySorting();
+
+            // Apply custom order by if specified
+            if (!empty($this->orderByFields)) {
+                $this->applyOrderBy();
+            }
 
             // Apply group by if specified
             if (!empty($this->groupByFields)) {
@@ -155,6 +236,11 @@ class Siftify implements Filterable
             // Apply field selection based on 'only' parameter
             if (!empty($this->onlyFields)) {
                 $this->relationshipHandler->applySelectOnly();
+            }
+
+            // Apply limit if specified
+            if ($this->resultLimit !== null) {
+                $this->query->limit($this->resultLimit);
             }
 
             // Calculate total count before pagination is applied
@@ -368,6 +454,16 @@ class Siftify implements Filterable
         return $this->groupByFields;
     }
 
+    public function getResultLimit(): ?int
+    {
+        return $this->resultLimit;
+    }
+
+    public function getOrderByFields(): array
+    {
+        return $this->orderByFields;
+    }
+
     public function setQuery(Builder $query): void
     {
         $this->query = $query;
@@ -417,6 +513,16 @@ class Siftify implements Filterable
     public function setGroupByFields(array $fields): void
     {
         $this->groupByFields = $fields;
+    }
+
+    public function setResultLimit(?int $limit): void
+    {
+        $this->resultLimit = $limit;
+    }
+
+    public function setOrderByFields(array $fields): void
+    {
+        $this->orderByFields = $fields;
     }
 
     public static function for(Request $request): self
