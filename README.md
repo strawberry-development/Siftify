@@ -93,4 +93,4 @@ If you find any security-related issues, please get in touch directly.
 
 ## License
 
-This project is licensed under the [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0).
+This project is licensed under the MIT License.
