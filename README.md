@@ -1,6 +1,6 @@
 # Siftify
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/strawberrydev/siftify.svg?style=flat-square)](https://packagist.org/packages/strawberrydev/siftify)  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/strawberrydev/siftify.svg?style=flat-square)](https://packagist.org/packages/strawberrydev/siftify)
 
 Siftify is a Laravel package designed for building robust APIs with ease. It provides a flexible and intuitive API for filtering, sorting, and paginating Eloquent models—ideal for developers who want powerful query capabilities with minimal effort.
 
